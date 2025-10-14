@@ -1,0 +1,3 @@
+django==5.0.6
+google-genai==0.1.0  # Use the official Google GenAI Python SDK
+django-cors-headers==4.3.1
