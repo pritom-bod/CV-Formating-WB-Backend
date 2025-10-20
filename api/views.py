@@ -116,8 +116,8 @@ WB_CV_SCHEMA = {
                     "position": {"type": "string", "description": "Title of the position held just title of the position nothing else exactly in cv (mandatory)"},
                     "location": {"type": "string", "description": "City and country of the employer"},
                     "summary_of_activities": {"type": "string", "description": "Brief description of the main activities and responsibilities"},
-                    "for_references": {"type": "string", "description": "if the employer can be contacted for references find name,designation, telephone, email"},
-                    "name": {"type": "string", "description": "Name of the expert or person (mandatory)"},
+                    "for_references": {"type": "string", "description": "Whether the employer can be contacted for references just find the reference and no give answer"},
+                    "name": {"type": "string", "description": "Name of the person which is the reference in cv for spacific company or project (mandatory)"},
                     "designation": {"type": "string", "description": "Designation of the expert in this project find it important data or position held (mandatory)"},
                     "telephone": {"type": "string", "description": "find the reference contact Phone number, mobile number, contact number (mandatory)"},
                     "email": {"type": "string", "description": "Email address of the expert or mail address (mandatory)"}
@@ -130,15 +130,15 @@ WB_CV_SCHEMA = {
         "detailed_tasks": {
             "type": "array",
             "items": {"type": "string"},
-            "description": ""
+            "description": "no need any result send empty "
         },
         "work_undertaken": {
             "type": "array",
             "items": {
                 "type": "object",
                 "properties": {
-                    "name": {"type": "string", "description": "Name of the assignment/project find from the CV and copy exactly as in cv. must be given full project name"},
-                    "year": {"type": "string", "description": "Year of the assignment/project. given resulty must be exactly as in cv"},
+                    "name": {"type": "string", "description": "Name of the assignment/project find from the CV and copy exactly as in cv. must be given full project name by any change not found in cv then give empty string"},
+                    "year": {"type": "string", "description": "Date (starting date to ending date/present) of the assignment/project. given resulty must be exactly as in cv"},
                     "location": {"type": "string"},
                     "client": {"type": "string"},
                     "main_features": {"type": "string", "description": "Main features of the project, try to find this from the cv and copy exactly as in cv every project must have main features."},
