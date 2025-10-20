@@ -36,15 +36,21 @@ SECRET_KEY = config('SECRET_KEY', default='django-insecure-default-fallback-key'
 DEBUG = config('DEBUG', default=True, cast=bool)
 
 # Reads ALLOWED_HOSTS from config.env (casts to list using Csv)
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='*', cast=Csv())
+# ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='*', cast=Csv())
+# ... (rest of your file remains the same)
 
-# CORS Configuration
+# Allow all hosts for development (includes LAN IP)
+ALLOWED_HOSTS = ['*']
+
+# CORS (keep as is, but ensure it's after ALLOWED_HOSTS)
+CORS_ALLOW_ALL_ORIGINS = True  # For testing; later use the list below
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",  # Frontend access
+    "http://localhost:3000",
     "http://127.0.0.1:3000",
-    # Add other origins if your frontend is hosted elsewhere
+    "http://192.168.1.17:3000",
 ]
 
+# ... (end of file)
 # Application definition
 
 INSTALLED_APPS = [
@@ -55,7 +61,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'corsheaders',  # Required for frontend communication
-    'api',          # Your core application
+    'api',
+    
 ]
 
 MIDDLEWARE = [

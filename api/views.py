@@ -86,7 +86,7 @@ WB_CV_SCHEMA = {
         },
         "other_training": {
             "type": "string",
-            "description": "All relevant training information copied exactly as in CV. Empty string if not present."
+            "description": "All relevant training information copied exactly as in CV and must be given result by listing of all trainings. Empty string if not present."
         },
         "countries_experience": {  # Added missing property
             "type": "string",
@@ -113,10 +113,10 @@ WB_CV_SCHEMA = {
                     "from": {"type": "string"},
                     "to": {"type": "string"},
                     "employer": {"type": "string", "description": "Name of the employer (mandatory)"},
-                    "position": {"type": "string", "description": "Title of the position held (mandatory)"},
+                    "position": {"type": "string", "description": "Title of the position held just title of the position nothing else exactly in cv (mandatory)"},
                     "location": {"type": "string", "description": "City and country of the employer"},
                     "summary_of_activities": {"type": "string", "description": "Brief description of the main activities and responsibilities"},
-                    "for_references": {"type": "string", "description": "Indicate 'Yes' or 'No' if the employer can be contacted for references"},
+                    "for_references": {"type": "string", "description": "if the employer can be contacted for references find name,designation, telephone, email"},
                     "name": {"type": "string", "description": "Name of the expert or person (mandatory)"},
                     "designation": {"type": "string", "description": "Designation of the expert in this project find it important data or position held (mandatory)"},
                     "telephone": {"type": "string", "description": "find the reference contact Phone number, mobile number, contact number (mandatory)"},
@@ -130,20 +130,20 @@ WB_CV_SCHEMA = {
         "detailed_tasks": {
             "type": "array",
             "items": {"type": "string"},
-            "description": "List of detailed tasks assigned to consultant team of experts"
+            "description": ""
         },
         "work_undertaken": {
             "type": "array",
             "items": {
                 "type": "object",
                 "properties": {
-                    "name": {"type": "string"},
-                    "year": {"type": "string"},
+                    "name": {"type": "string", "description": "Name of the assignment/project find from the CV and copy exactly as in cv. must be given full project name"},
+                    "year": {"type": "string", "description": "Year of the assignment/project. given resulty must be exactly as in cv"},
                     "location": {"type": "string"},
                     "client": {"type": "string"},
-                    "main_features": {"type": "string", "description": "Main features of the project"},
-                    "position_held": {"type": "string", "description": "Position held during the project"},
-                    "activities": {"type": "string", "description": "Description of the main activities undertaken"}
+                    "main_features": {"type": "string", "description": "Main features of the project, try to find this from the cv and copy exactly as in cv every project must have main features."},
+                    "position_held": {"type": "string", "description": "Position held during the project. this must be given exactly as in cv."},
+                    "activities": {"type": "string", "description": "Description of the main activities undertaken, responsibilities carried out during the project. Try to find this from the CV and copy exactly as in CV."}
                 },
                 "required": ["name", "year", "location", "client", "main_features", 
                              "position_held", "activities"]  # Removed "summary"
@@ -225,7 +225,7 @@ def process_cv_view(request):
             "7. education: Array of objects from education section/table. For each row: {school_university: first part, degree: second, date_obtained: third}. Use ' | ' splits if present.\n"
             "8. membership_in_professional_associations: Extract memberships/certifications as multi-line string (join with '\n'). Empty if not found.\n"
             "9. publications: Extract list of publications as multi-line string (join with '\n'). Empty if not found.\n"
-            "10. other_training: Extract other trainings text exactly, join multiple lines if needed.\n"
+            "10. other_training: Extract other trainings text exactly and show one by one list all trainings, join multiple lines if needed.\n"
             "11. countries_experience: Extract list of countries, comma-separated.\n"
             "12. languages: Array of objects from languages table. {language: first, speaking: second, reading: third, writing: fourth}, proficiencies as 'good', 'fair', 'poor' or exact text.\n"
             "13. employment_record: Array of objects from employment sections. Each: {from: start date, to: end date, employer: name (mandatory), position: role (mandatory), location: city/country, summary_of_activities: description, for_references: 'Yes' or 'No', name: person name (mandatory), designation: designation (mandatory), telephone: phone (mandatory), email: email (mandatory)}. Sort reverse chronological by 'from' if possible.\n"

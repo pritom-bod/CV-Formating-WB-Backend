@@ -1,3 +1,27 @@
-django==5.0.6
-google-genai==0.1.0  # Use the official Google GenAI Python SDK
-django-cors-headers==4.3.1
+# Django framework
+Django==5.0.6
+
+# Google Gemini API (Generative AI)
+google-generativeai==0.7.2
+google-api-core==2.19.1
+google-auth==2.35.0
+
+# Environment variable management
+python-decouple==3.8
+python-dotenv==1.0.1
+
+# Microsoft Word (DOCX) file processing
+python-docx==1.1.0
+
+# CORS (for React/Next.js frontend communication)
+django-cors-headers==4.4.0
+
+# For structured JSON schema and validation
+jsonschema==4.23.0
+
+# Logging, retry and error tracing helpers
+requests==2.32.3
+
+# Optional (useful for deployment or debugging)
+gunicorn==23.0.0
+whitenoise==6.7.0
