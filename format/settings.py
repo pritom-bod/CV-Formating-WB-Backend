@@ -29,7 +29,7 @@ else:
 
 # SECURITY WARNING: keep the secret key used in production secret!
 # Reads SECRET_KEY from config.env
-SECRET_KEY = config('SECRET_KEY', default='django-insecure-default-fallback-key')
+SECRET_KEY = "^pz0do3c^d36d40*x3sw$-ppj9u((!=p$rh$#omkk1a66v*21e"
 
 # SECURITY WARNING: don't run with debug turned on in production!
 # Reads DEBUG from config.env (casts to boolean)
