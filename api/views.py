@@ -1,3 +1,5 @@
+# views.py (full file)
+
 from dotenv import load_dotenv
 import os
 import json
@@ -18,6 +20,9 @@ from google.api_core.exceptions import GoogleAPIError
 import time
 import logging
 import traceback
+import textract
+import pdfplumber
+from PyPDF2 import PdfReader
 
 load_dotenv()  # Load environment variables from .env file
 API_KEY = os.environ.get("GOOGLE_API_KEY", "")
@@ -136,9 +141,10 @@ WB_CV_SCHEMA = {
             "type": "array",
             "items": {
                 "type": "object",
+                "description": "Find project by Project name/date/Details of each assignment/project undertaken, Mainly find Name of project and put all projects one by one with all project details/date/main features/position held/activities undertaken exactly as in cv. Check cv very well for all projects no miss any project.",
                 "properties": {
                     "name": {"type": "string", "description": "Name of the assignment/project find from the CV and copy exactly as in cv. must be given full project name by any change not found in cv then give empty string"},
-                    "year": {"type": "string", "description": "Date (starting date to ending date/present) of the assignment/project. given resulty must be exactly as in cv"},
+                    "year": {"type": "string", "description": "Date of the assignment/project mention start date to end date or Present/till date. Given result must be exactly as in cv"},
                     "location": {"type": "string"},
                     "client": {"type": "string"},
                     "main_features": {"type": "string", "description": "Main features of the project, try to find this from the cv and copy exactly as in cv every project must have main features."},
@@ -162,34 +168,62 @@ WB_CV_SCHEMA = {
     ]
 }
 
-def extract_text_from_docx(base64_content):
+def extract_text(base64_content, filename):
     try:
-        docx_binary = base64.b64decode(base64_content)
-        doc = Document(io.BytesIO(docx_binary))
-        
+        ext = filename.lower().split('.')[-1]
+        binary = base64.b64decode(base64_content)
+
         full_text = []
-        # Extract paragraph text
-        for para in doc.paragraphs:
-            if para.text.strip():
-                full_text.append(para.text.strip())
+
+        if ext == 'docx':
+            doc = Document(io.BytesIO(binary))
+            # Extract paragraph text
+            for para in doc.paragraphs:
+                if para.text.strip():
+                    full_text.append(para.text.strip())
+            # Extract text from tables
+            for table in doc.tables:
+                for row in table.rows:
+                    row_text = [cell.text.strip() for cell in row.cells if cell.text.strip()]
+                    if row_text:
+                        full_text.append(' | '.join(row_text))
+            # Extract bullet points
+            for para in doc.paragraphs:
+                if para.style.name.startswith('List') or para.text.strip().startswith(('*', '-', '•')):
+                    full_text.append(para.text.strip())
         
-        # Extract text from tables
-        for table in doc.tables:
-            for row in table.rows:
-                row_text = [cell.text.strip() for cell in row.cells if cell.text.strip()]
-                if row_text:
-                    full_text.append(' | '.join(row_text))
+        elif ext == 'pdf':
+            with pdfplumber.open(io.BytesIO(binary)) as pdf:
+                for page in pdf.pages:
+                    text = page.extract_text()
+                    if text:
+                        lines = text.split('\n')
+                        for line in lines:
+                            stripped = line.strip()
+                            if stripped:
+                                full_text.append(stripped)
+                    tables = page.extract_tables()
+                    for table in tables:
+                        for row in table:
+                            row_text = [str(cell).strip() for cell in row if cell is not None and str(cell).strip()]
+                            if row_text:
+                                full_text.append(' | '.join(row_text))
         
-        # Extract bullet points
-        for para in doc.paragraphs:
-            if para.style.name.startswith('List') or para.text.strip().startswith(('*', '-', '•')):
-                full_text.append(para.text.strip())
+        elif ext == 'txt':
+            full_text.append(binary.decode('utf-8').strip())
         
+        elif ext == 'doc':
+            text = textract.process(io.BytesIO(binary))
+            full_text.append(text.decode('utf-8').strip())
+        
+        else:
+            raise ValueError(f"Unsupported file type: {ext}")
+
         extracted_text = "\n".join(full_text)
-        logger.info(f"Extracted text from DOCX (length: {len(extracted_text)}): {extracted_text[:500]}...")  # Log snippet
+        logger.info(f"Extracted text from {ext.upper()} (length: {len(extracted_text)}): {extracted_text[:500]}...")  # Log snippet
         return extracted_text
     except Exception as e:
-        logger.error(f"Error extracting text from DOCX: {e}")
+        logger.error(f"Error extracting text from file: {e}")
         return ""
 
 @csrf_exempt
@@ -203,9 +237,9 @@ def process_cv_view(request):
         if not file_content_base64 or not filename:
             return JsonResponse({'success': False, 'message': 'File content or filename is missing.'}, status=400)
 
-        cv_text = extract_text_from_docx(file_content_base64)
+        cv_text = extract_text(file_content_base64, filename)
         if not cv_text:
-            return JsonResponse({'success': False, 'message': 'Failed to extract text from DOCX file.'}, status=400)
+            return JsonResponse({'success': False, 'message': 'Failed to extract text from file.'}, status=400)
 
         model = genai.GenerativeModel(MODEL_NAME)
         prompt = (
