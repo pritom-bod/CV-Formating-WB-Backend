@@ -29,7 +29,7 @@ API_KEY = os.environ.get("GOOGLE_API_KEY", "")
 if not API_KEY:
     raise ValueError("GOOGLE_API_KEY is not set. Please configure it in the .env file or environment.")
 genai.configure(api_key=API_KEY)
-MODEL_NAME = "gemini-2.5-flash"  # Use available model
+MODEL_NAME = "gemini-2.0-flash"  # Use available model
 MAX_RETRIES = 3
 
 logging.basicConfig(level=logging.INFO)
@@ -243,31 +243,41 @@ def process_cv_view(request):
 
         model = genai.GenerativeModel(MODEL_NAME)
         prompt = (
-            "You are an expert in extracting data from CVs strictly according to the World Bank FORM TECH-6 template. Your sole task is to parse the provided CV text and extract ONLY the information that is explicitly stated, without any invention, assumption, inference, modification, or addition. If a field is not present or unclear, use an empty string '' for strings or an empty array [] for lists. Preserve original wording, phrasing, capitalization, and formatting as much as possible. Normalize dates only to 'YYYY' or 'YYYY-MM' or 'YYYY-MM-DD' if they are clearly dates; otherwise, leave as-is.\n\n"
-            "The CV text may contain:\n"
-            "- Plain paragraphs: e.g., 'Name: John Doe'\n"
-            "- Table rows separated by ' | ': e.g., 'University X | MSc | 2020'\n"
-            "- Bullet points starting with '*', '-', or '•'\n\n"
-            "Identify sections by keywords like numbers (1., 2., etc.) or headings (Education, Languages, etc.). Extract all matching data for arrays, in the order they appear, but for employment_record, sort in reverse chronological order if dates are parsable.\n\n"
-            "Fields to extract (must include all, use empties if not found):\n"
-            "1. name: Extract full name after 'Name' or similar; empty if not found.\n"
-            "2. expert_contact_information: Object with phone (extract phone/mobile) and email (extract email).\n"
-            "3. proposed_position: Extract after 'Proposed Position' or similar.\n"
-            "4. employer: Extract current/primary employer if stated.\n"
-            "5. date_of_birth: Extract birth date exactly.\n"
-            "6. nationality: Extract nationality exactly.\n"
-            "7. education: Array of objects from education section/table. For each row: {school_university: first part, degree: second, date_obtained: third}. Use ' | ' splits if present.\n"
-            "8. membership_in_professional_associations: Extract memberships/certifications as multi-line string (join with '\n'). Empty if not found.\n"
-            "9. publications: Extract list of publications as multi-line string (join with '\n'). Empty if not found.\n"
-            "10. other_training: Extract other trainings text exactly and show one by one list all trainings, join multiple lines if needed.\n"
-            "11. countries_experience: Extract list of countries, comma-separated.\n"
-            "12. languages: Array of objects from languages table. {language: first, speaking: second, reading: third, writing: fourth}, proficiencies as 'good', 'fair', 'poor' or exact text.\n"
-            "13. employment_record: Array of objects from employment sections. Each: {from: start date, to: end date, employer: name (mandatory), position: role (mandatory), location: city/country, summary_of_activities: description, for_references: 'Yes' or 'No', name: person name (mandatory), designation: designation (mandatory), telephone: phone (mandatory), email: email (mandatory)}. Sort reverse chronological by 'from' if possible.\n"
-            "14. detailed_tasks: Array of strings from tasks list, each bullet or line as one string.\n"
-            "15. work_undertaken: Array of objects from work experience sections. Group by assignment, extract {name, year, location, client, main_features: features description of the project, position_held: role, activities: activities description of the work undertaken}.\n"
-            "16. worked_for_world_bank: Extract answer to World Bank work question; default 'No'.\n\n"
-            "Output ONLY valid JSON matching the provided schema. No other text.\n\n"
-            "CV text:\n"
+            """You are an expert in extracting data from CVs strictly according to the World Bank FORM TECH-6 template. 
+
+                Your sole task is to parse the provided CV text and extract ONLY the information that is explicitly stated. Do NOT invent, assume, infer, modify, or add any data. If a value or section is not present, missing, or unclear, you MUST return an empty string ('') for strings, and an empty array ([]) for lists or arrays in the output.
+
+                Every field listed in the JSON schema below must be present in your output, even if the corresponding data is missing from the CV. If data is not found for a particular field, provide the exact required empty value for that field ('' or []). Under NO circumstances should you omit any fields or return a partial/malformed object.
+
+                Preserve original wording, phrasing, capitalization, and formatting as much as possible. Normalize dates only to 'YYYY', 'YYYY-MM', or 'YYYY-MM-DD' formats if they are clearly dates; otherwise, leave as-is.
+
+                The CV text may contain:
+                - Plain paragraphs: e.g., 'Name: John Doe'
+                - Table rows separated by ' | ', e.g., 'University X | MSc | 2020'
+                - Bullet points starting with '*', '-', or '•'
+
+                Identify sections by number (1., 2., etc.) or headings (Education, Languages, etc.). Extract all required information as arrays in the order they appear, sorting employment_record in reverse chronological order if dates can be parsed.
+
+                Fields to extract (all must be present in output, always fill with either actual data or empty as instructed above):
+                1. name: Extract full name after 'Name' or similar; '' if not found.
+                2. expert_contact_information: Object with phone (extract phone/mobile, '' if missing) and email (extract email, '' if missing).
+                3. proposed_position: Extract after 'Proposed Position' or similar; '' if not found.
+                4. employer: Extract current/primary employer; '' if not found.
+                5. date_of_birth: Extract birth date exactly; '' if not found.
+                6. nationality: Extract nationality; '' if not found.
+                7. education: Array of objects from education section/table, or [] if not found. For each: school_university, degree, date_obtained (all fields '' if missing).
+                8. membership_in_professional_associations: Multi-line string; '' if not found.
+                9. publications: Multi-line string; '' if not found.
+                10. other_training: Training text, combine lines as needed; '' if not found.
+                11. countries_experience: Comma-separated string; '' if not found.
+                12. languages: Array of objects from languages section, or [] if not found. For each: language, speaking, reading, writing (all fields '' if missing).
+                13. employment_record: Array of objects, or [] if not found. See schema for required subfields; use '' for any missing string field.
+                14. detailed_tasks: Array of strings; [] if not found.
+                15. work_undertaken: Array of project objects, or [] if not found. All subfields as above.
+                16. worked_for_world_bank: Extract answer to World Bank work question; default to 'No' if absent.
+
+                Below is the required JSON schema. Output ONLY a JSON object with EVERY field as described; do not output any additional explanation, text, or formatting."""
+                "CV text:\n"
             f"{cv_text}"
         )
 
